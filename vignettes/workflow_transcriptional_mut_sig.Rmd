@@ -74,6 +74,7 @@ library(reshape2)
 library(gridExtra)
 library(dcanr)
 library(mclust)
+library(BiocFileCache)
 
 #ggplot theme
 rl = 1.2
@@ -105,6 +106,7 @@ The development of microarrays and more recently the rapid uptake of RNA-sequenc
 Cancers are a heterogeneous set of diseases with a number of clinical and pathological subtypes. In diseases such as breast cancer the primary clinical classifications relate to the expression of hormone receptors (estrogen receptor: ER; and progesterone receptor: PR) or the overexpression of Erb-B2 receptor tyrosine kinase (*HER2*), as these features can be directly targeted with therapeutic agents.  A common example of transcriptomic or gene expression data informing clinical practice is the use of prediction analysis of microarray 50 (PAM50) signatures for distinguishing the intrinsic breast cancer subtypes [@parker09, @cieslik18]. For many other cancers, subtype classification has largely relied upon identifying sets of recurrent mutations across large patient cohorts, with whole genome or whole exome sequencing studies helping to resolve the clinically significant subtypes [@cancer13, @papaemmanuil16]. 
 
 Perhaps the most well-known 'relative approach' is single-sample gene set enrichment analysis (ssGSEA) [@barbie09], often used through the [GenePattern web-tool](http://software.broadinstitute.org/cancer/software/genepattern/modules/docs/ssGSEAProjection/4). Another common approach is [gene set variation analysis (GSVA)](https://bioconductor.org/packages/release/bioc/html/GSVA.html) [@hanzelmann13] which is available as an R/Bioconductor package that also includes functionality for ssGSEA, an alternative approach known as PLAGE [@tomfohr05], and a z-score based approach [@lee08]. Both ssGSEA and GSVA use a Kolmogorov-Smirnov like random-walk statistic to convert normalised gene ranks to the resulting score, however this normalisation procedure means that the scores are not truly 'single-sample', and variations in the overall sample composition for a study (e.g. variations in the presence or relative frequency of different cancer subtypes) can lead to unexpected changes in sample scores. Furthermore, the resultant scores from these methods can vary in their range and absolute value, making them difficult to interpret without further processing. To overcome this, we have developed a single-sample gene set scoring method [singscore](<http://bioconductor.org/packages/singscore/>) [@foroutan18] which simply uses the ranks of genes within a given set, normalised relative to the maximum and minimum theoretical scores for a gene set of a given size.
+
 
 Through large scale efforts such as The Cancer Genome Atlas (TCGA), transcriptomic data are available for thousands of clinical samples, often together with corresponding genomic or epigenomic (often DNA methylation) data. These transcriptomic data can help to characterise the functional effects of corresponding mutations, and provide a window to study the heterogeneity which arises within different subtypes of cancer due to epigenetic and transcriptional regulatory programs which can also influence cell behaviour. Here, we demonstrate that the single-sample gene set scoring method singscore [@foroutan18] can be used to classify TCGA AML samples using transcriptional 'gene signatures' for the NPM1c mutation, *KMT2A* (*MLL*) gene fusions, and *PML-RARA* gene fusions that were derived from independent studies. Without any need for parameter fitting or estimation, we show that gene set scoring with singscore can distinguish samples carrying these mutations. The case studies we present demonstrate the application of gene set scoring to examine not only the differences, but also the relative similarities between established subtypes of AML that impact clinical outcome.
 
@@ -236,13 +238,15 @@ Data transformation to TPM or RPKM/FPKM requires the lengths for all genes to be
 
 ```{r download_gencode, results='hide'}
 #download v22 of the GENCODE annotation
+library(BiocFileCache)
 gencode_file = 'gencode.v22.annotation.gtf.gz'
 gencode_link = paste(
   'ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_22',
   gencode_file,
   sep = '/'
   )
-download.file(gencode_link, gencode_file, method = 'libcurl') #(size: 39MB)
+bfc <- BiocFileCache()
+gencode_path <- bfcrpath(bfc, gencode_link)
 ```
 
 The `rtracklayer` R package [@R-rtracklayer] provides functions to help parse GTF files.
@@ -251,7 +255,7 @@ The `rtracklayer` R package [@R-rtracklayer] provides functions to help parse GT
 library(rtracklayer)
 library(plyr)
 
-gtf = import.gff(gencode_file, format = 'gtf', genome = 'GRCm38.71', feature.type = 'exon')
+gtf = import.gff(gencode_path, format = 'gtf', genome = 'GRCm38.71', feature.type = 'exon')
 #split records by gene to group exons of the same gene
 grl = reduce(split(gtf, elementMetadata(gtf)$gene_id))
 gene_lengths = ldply(grl, function(x) {
@@ -393,7 +397,7 @@ verhaak_links = paste0(
 
 #download files
 verhaak_files = paste0(verhaak_names, '.xml')
-mapply(download.file, verhaak_links, verhaak_files, method = 'libcurl')
+verhaak_path <- bfcrpath(bfc, verhaak_links)
 ```
 
 Functions in the `GSEABase` package help with reading, parsing and processing the signatures. Signatures from an MSigDB XML file can be read using the `getBroadSets` function which results in a `GeneSet` object. Gene symbols, Entrez IDs and affymetrix chip IDs from the original experiment (HG-U133A in this case) are stored in the XML file. Entrez IDs are read from the file as these can be mapped directly to our data. Conversions to other identifiers can be achieved using the `mapIdentifiers` function from `GSEABase` and an annotation package that contains the mappings. The advantage of using this function instead of the `mapIds` function from the `AnnotationDbi` package is that the former retains the `GeneSet` object after conversion of IDs.
@@ -401,7 +405,7 @@ Functions in the `GSEABase` package help with reading, parsing and processing th
 ```{r read_signatures}
 library(GSEABase)
 
-verhaak_sigs = getBroadSets(verhaak_files, membersId = 'MEMBERS_EZID')
+verhaak_sigs = getBroadSets(verhaak_path, membersId = 'MEMBERS_EZID')
 verhaak_sigs
 ```
 
@@ -640,8 +644,8 @@ rossmll_link = paste0(
 
 #download files
 rossmll_file = paste0(rossmll_name, '.xml')
-download.file(rossmll_link, rossmll_file, method = 'libcurl')
-rossmll_sig = getBroadSets(rossmll_file, membersId = 'MEMBERS_EZID')
+rossmll_path <- bfcrpath(bfc, rossmll_link)
+rossmll_sig = getBroadSets(rossmll_path, membersId = 'MEMBERS_EZID')
 rossmll_sig
 ```
 
@@ -711,8 +715,8 @@ newsig_link = paste0(
 
 #download files
 newsig_file = paste0(newsig_name, '.xml')
-download.file(newsig_link, newsig_file, method = 'libcurl')
-newsig_sig = getBroadSets(newsig_file, membersId = 'MEMBERS_EZID')
+newsig_path <- bfcrpath(bfc, newsig_link)
+newsig_sig = getBroadSets(newsig_path, membersId = 'MEMBERS_EZID')
 
 #score
 newsig_scores = simpleScore(aml_ranked, newsig_sig[[1]], knownDirection = FALSE)

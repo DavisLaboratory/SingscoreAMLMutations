@@ -62,7 +62,7 @@ Workflow: True
 biocViews: GeneExpressionWorkflow, GenomicVariantsWorkflow, ImmunoOncologyWorkflow, Workflow
 VignetteBuilder: knitr
 Depends: 
-    R (>= 3.6.0)
+    R (>= 4.0.0)
 Imports: 
     dcanr,
     edgeR,
@@ -76,14 +76,15 @@ Imports:
     rtracklayer,
     singscore,
     SummarizedExperiment,
-    TCGAbiolinks
+    TCGAbiolinks,
+    BiocFileCache
 Suggests: 
     knitr,
     rmarkdown,
     BiocStyle,
     BiocWorkflowTools,
     spelling
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 Language: en-US
 URL: https://github.com/DavisLaboratory/SingscoreAMLMutations
 BugReports: https://github.com/DavisLaboratory/SingscoreAMLMutations/issues

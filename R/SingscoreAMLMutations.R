@@ -11,6 +11,7 @@
 #' @import SummarizedExperiment
 #' @import TCGAbiolinks
 #' @import mclust
+#' @import BiocFileCache
 #' 
 "_PACKAGE"
 

@@ -73,6 +73,7 @@ library(singscore)
 library(reshape2)
 library(gridExtra)
 library(dcanr)
+library(BiocFileCache) 
 
 #ggplot theme
 rl = 1.2
@@ -234,13 +235,15 @@ Singscore要求同一个样本内的基因表达量是可以互相比较的，�
 
 ```{r download_gencode, results='hide'}
 #download v22 of the GENCODE annotation
+library(BiocFileCache) 
 gencode_file = 'gencode.v22.annotation.gtf.gz'
 gencode_link = paste(
   'ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_22',
   gencode_file,
   sep = '/'
   )
-download.file(gencode_link, gencode_file, method = 'libcurl') #(size: 39MB)
+bfc <- BiocFileCache() 
+gencode_path <- bfcrpath(bfc, gencode_link) 
 ```
 
 `rtracklayer`这个R包提供了解析GTF文件的函数。
@@ -249,7 +252,7 @@ download.file(gencode_link, gencode_file, method = 'libcurl') #(size: 39MB)
 library(rtracklayer)
 library(plyr)
 
-gtf = import.gff(gencode_file, format = 'gtf', genome = 'GRCm38.71', feature.type = 'exon')
+gtf = import.gff(gencode_path, format = 'gtf', genome = 'GRCm38.71', feature.type = 'exon')
 #split records by gene to group exons of the same gene
 grl = reduce(split(gtf, elementMetadata(gtf)$gene_id))
 gene_lengths = ldply(grl, function(x) {
@@ -394,7 +397,7 @@ verhaak_links = paste0(
 
 #download files
 verhaak_files = paste0(verhaak_names, '.xml')
-mapply(download.file, verhaak_links, verhaak_files, method = 'libcurl')
+verhaak_path <- bfcrpath(bfc, verhaak_links) 
 ```
 
 `GSEABase`包中的函数可以用来读取、解析和处理标签（signatures）。`getBroadSets`函数用来读取MSigDB XML文件中的标签（signatures）并生成一个`GeneSet`对象。XML文件还提供了来自原始实验（即HG-U133A）的Gene symbols，Entrez IDs和affymetrix chip IDs。我们仅读入了Entrez IDs因为它能直接和我们的数据匹配起来。`GSEABase`包中的`mapIdentifiers`函数可以帮助你进行ID转换，之所以用这个函数而不是`AnnotationDbi`包中的`mapIds`是因为这个函数在转换ID的同时保留了`GeneSet`对象。
@@ -402,7 +405,7 @@ mapply(download.file, verhaak_links, verhaak_files, method = 'libcurl')
 ```{r read_signatures}
 library(GSEABase)
 
-verhaak_sigs = getBroadSets(verhaak_files, membersId = 'MEMBERS_EZID')
+verhaak_sigs = getBroadSets(verhaak_path, membersId = 'MEMBERS_EZID')
 verhaak_sigs
 ```
 
@@ -620,8 +623,8 @@ rossmll_link = paste0(
 
 #download files
 rossmll_file = paste0(rossmll_name, '.xml')
-download.file(rossmll_link, rossmll_file, method = 'libcurl')
-rossmll_sig = getBroadSets(rossmll_file, membersId = 'MEMBERS_EZID')
+rossmll_path <- bfcrpath(bfc, rossmll_link) 
+rossmll_sig = getBroadSets(rossmll_path, membersId = 'MEMBERS_EZID')
 rossmll_sig
 ```
 
@@ -684,8 +687,8 @@ newsig_link = paste0(
 
 #download files
 newsig_file = paste0(newsig_name, '.xml')
-download.file(newsig_link, newsig_file, method = 'libcurl')
-newsig_sig = getBroadSets(newsig_file, membersId = 'MEMBERS_EZID')
+newsig_path <- bfcrpath(bfc, newsig_link) 
+newsig_sig = getBroadSets(newsig_path, membersId = 'MEMBERS_EZID')
 
 #score
 newsig_scores = simpleScore(aml_ranked, newsig_sig[[1]], knownDirection = FALSE)

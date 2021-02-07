@@ -23,15 +23,15 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Dharmesh D. Bhuva \email{bhuva.d@wehi.edu.au} (0000-0002-6398-9157)
+\strong{Maintainer}: Dharmesh D. Bhuva \email{bhuva.d@wehi.edu.au} (\href{https://orcid.org/0000-0002-6398-9157}{ORCID})
 
 Authors:
 \itemize{
-  \item Momeneh Foroutan \email{foroutan.m@wehi.edu.au} (0000-0002-1440-0457)
-  \item Yi Xie \email{xie.y@wehi.edu.au} (0000-0002-1938-4089)
+  \item Momeneh Foroutan \email{foroutan.m@wehi.edu.au} (\href{https://orcid.org/0000-0002-1440-0457}{ORCID})
+  \item Yi Xie \email{xie.y@wehi.edu.au} (\href{https://orcid.org/0000-0002-1938-4089}{ORCID})
   \item Ruqian Lyu \email{lyu.r@wehi.edu.au}
-  \item Joseph Cursons \email{cursons.j@wehi.edu.au} (0000-0002-5053-4540)
-  \item Melissa J. Davis \email{lyu.r@wehi.edu.au} (0000-0003-4864-7033)
+  \item Joseph Cursons \email{cursons.j@wehi.edu.au} (\href{https://orcid.org/0000-0002-5053-4540}{ORCID})
+  \item Melissa J. Davis \email{davis.m@wehi.edu.au} (\href{https://orcid.org/0000-0003-4864-7033}{ORCID})
 }
 
 }
