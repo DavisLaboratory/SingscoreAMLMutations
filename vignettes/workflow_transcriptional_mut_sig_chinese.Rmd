@@ -472,6 +472,7 @@ p1
 
 ```{r plot-rank-density, fig.wide=TRUE, fig.height=4, fig.cap="基因排名的分布显示了应该上调的基因在高分样本中上调，在低分样本中下调；应该下调的基因在高分样本中下调，在低分样本中上调. 从左到右分别是总体得分最高的样本、总体得分最低的样本和总体离差（dispersion）值最高的样本。barcode图显示了标签内每个基因的排名及其密度函数。上调基因的颜色为绿色而下调基因为紫色。在最高分和最低分样本中，排名两端呈现正态分布（Gaussian distributions）。总体离差（dispersion）最高的样本得分接近0，因为下调基因的排名呈现均匀分布而上调基因的排名呈现双峰分布。"}
 library(gridExtra)
+library(ggplot2)
 
 #select samples with the properties required
 select_samples = c(
@@ -514,6 +515,25 @@ grid.arrange(grobs = rank_plots, nrow = 1)
 不管怎样，我们的目的不是讨论哪个模型应该被用于预测突变状态，而是展示singscore和转录组标签（signature）区分样本的能力。因此我们在这里用训练模型的数据评价该模型的表现。我们先把分数和突变注释合并到一起。
 
 ```{r create_plotdf_boxplot}
+library(reshape2)
+
+#ggplot theme
+rl = 1.2
+current_theme = theme_minimal() +
+  theme(
+    panel.border = element_rect(colour = 'black', fill = NA),
+    panel.grid.minor = element_blank(),
+    axis.title = element_text(size = rel(rl) * 1.1),
+    axis.text = element_text(size = rel(rl)),
+    plot.title = element_text(size = rel(rl)),
+    strip.background = element_rect(fill = NA, colour = 'black'),
+    strip.text = element_text(size = rel(rl)),
+    legend.text = element_text(size = rel(rl)),
+    legend.title = element_text(size = rel(rl), face = 'italic'),
+    legend.position = 'bottom',
+    legend.direction = 'horizontal'
+  )
+
 #create a dataframe with the data required: scores and mutations
 scoredf = as.data.frame(colData(aml_se)[, aml_mutations])
 scoredf$Score = verhaak_scores$TotalScore

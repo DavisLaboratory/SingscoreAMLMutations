@@ -468,6 +468,7 @@ Figure \@ref(fig:plot-dispersion) shows that the set of down-regulated genes has
 
 ```{r plot-rank-density, fig.wide=TRUE, fig.height=4, fig.cap="Rank distribution of genes reveals that expected up-regulated genes are up-regulated in high scoring samples and down-regulated in low-scoring samples with a similar, but inverse, observation for the expected down-regulated genes. Samples with the highest score, lowest score and highest dispersion (MAD) are show from left to right. The barcode plot for ranks of genes in each signature along with the density of the ranks is shown in each plot. Up-regulated genes are represented in green and down-regulated genes in purple. Gaussian distributions are observed at the extremes for the lowest and highest scores. High dispersion results in scores close to 0 because all genes are either evenly distributed (down-regulated gene set) or bi-modally distributed at the extrema (up-regulated gene set)"}
 library(gridExtra)
+library(ggplot2)
 
 #select samples with the properties required
 select_samples = c(
@@ -510,6 +511,25 @@ Mutation status can be predicted from singscores using a logistic regression mod
 In any case, our aim here is not to discuss the various models that can be used to predict mutation status, but to exhibit the discriminant power of singscore and transcriptomic signatures. consequently, the data used to train the model are used to evaluate the basic performance properties. We begin by combining the scores with mutation annotations.
 
 ```{r create_plotdf_boxplot}
+library(reshape2)
+
+#ggplot theme
+rl = 1.2
+current_theme = theme_minimal() +
+  theme(
+    panel.border = element_rect(colour = 'black', fill = NA),
+    panel.grid.minor = element_blank(),
+    axis.title = element_text(size = rel(rl) * 1.1),
+    axis.text = element_text(size = rel(rl)),
+    plot.title = element_text(size = rel(rl)),
+    strip.background = element_rect(fill = NA, colour = 'black'),
+    strip.text = element_text(size = rel(rl)),
+    legend.text = element_text(size = rel(rl)),
+    legend.title = element_text(size = rel(rl), face = 'italic'),
+    legend.position = 'bottom',
+    legend.direction = 'horizontal'
+  )
+
 #create a dataframe with the data required: scores and mutations
 scoredf = as.data.frame(colData(aml_se)[, aml_mutations])
 scoredf$Score = verhaak_scores$TotalScore
