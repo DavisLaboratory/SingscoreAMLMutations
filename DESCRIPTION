@@ -33,6 +33,13 @@ Authors@R:
         comment = c(ORCID = '')
       ),
       person(
+        "Malvika",
+        "Kharbanda",
+        email = "kharbanda.m@wehi.edu.au",
+        role = c("aut"),
+        comment = c(ORCID = '0000-0001-9726-3023')
+      ),
+      person(
         "Joseph",
         "Cursons",
         email = "cursons.j@wehi.edu.au",
@@ -62,7 +69,7 @@ Workflow: True
 biocViews: GeneExpressionWorkflow, GenomicVariantsWorkflow, ImmunoOncologyWorkflow, Workflow
 VignetteBuilder: knitr
 Depends: 
-    R (>= 4.0.0)
+    R (>= 4.1.0)
 Imports: 
     dcanr,
     edgeR,

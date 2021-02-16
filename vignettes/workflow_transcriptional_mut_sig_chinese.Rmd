@@ -18,6 +18,10 @@ author:
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
     email: lyu.r@wehi.edu.au
+  - name: Malvika Kharbanda
+    affiliation:
+      - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
+    email: kharbanda.m@wehi.edu.au
   - name: Joseph Cursons
     affiliation:
       - Bioinformatics Division, Walter and Eliza Hall Institute of Medical Research, Parkville, VIC 3052, Australia
