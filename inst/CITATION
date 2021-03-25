@@ -1,0 +1,15 @@
+citHeader("To cite SingscoreAMLMutations in publications use:")
+
+citEntry(
+  entry    = "Article",
+  title    = "Using singscore to predict mutation status in acute myeloid leukemia from       transcriptomic signatures",
+  author   = c(person ("Bhuva", "Dharmesh D."), person("Foroutan", "Momeneh"), person("Xie", "Yi"), 
+  person("Lyu", "Ruqian"), person("Cursons", "Joseph"), person("Davis", "Melissa J."))
+  journal  = "F1000Research",
+  year     = 2019,
+  volume   = 8,
+  textVersion = paste(
+  )
+)
+
+
