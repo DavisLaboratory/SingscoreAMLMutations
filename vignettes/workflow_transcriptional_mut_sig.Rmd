@@ -130,7 +130,7 @@ While we demonstrate that singscore is capable of inferring mutation status from
 Downloading and preparing the data {#download-and-prepare}
 ==================================
 
-Data from TCGA project is made available through the Genomic Data Commons (GDC). Open access data from the project can be accessed in multiple pre-processed formats. Transcriptomic data can be downloaded either at the count level or as FPKM transformed abundance, before or after upper quantile normalisation. Other pre-processed version can be found from sources such as the [cBioPortal](http://www.cbioportal.org/) and [FireBrowse](http://firebrowse.org). The GDC data used STAR to perform a two-pass alignment followed by quantification using HTSeq. Data from the GDC can be downloaded using the [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool) which allows users to select the specific files of interest using the GDC portal. These files then have to be read, merged, annotated and processed into a data structure that simplifies downstream analysis. Alternatively, all the above mentioned steps, including the download, can be performed using the R package [`TCGAbiolinks`](http://bioconductor.org/packages/release/bioc/html/TCGAbiolinks.html) [@colaprico15, @R-TCGAbiolinks]. The package supports data download using the GDC API and the GDC client. We will use the TCGAbiolinks package to download, annotate and process the data into a SummarizedExperiment R object.
+Data from TCGA project is made available through the Genomic Data Commons (GDC). Open access data from the project can be accessed in multiple pre-processed formats. Transcriptomic data can be downloaded either at the count level or as FPKM transformed abundance, before or after upper quantile normalisation. Other pre-processed version can be found from sources such as the [cBioPortal](http://www.cbioportal.org/) and [FireBrowse](http://firebrowse.org). The GDC data used STAR to perform a two-pass alignment followed by quantification. Data from the GDC can be downloaded using the [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool) which allows users to select the specific files of interest using the GDC portal. These files then have to be read, merged, annotated and processed into a data structure that simplifies downstream analysis. Alternatively, all the above mentioned steps, including the download, can be performed using the R package [`TCGAbiolinks`](http://bioconductor.org/packages/release/bioc/html/TCGAbiolinks.html) [@colaprico15, @R-TCGAbiolinks]. The package supports data download using the GDC API and the GDC client. We will use the TCGAbiolinks package to download, annotate and process the data into a SummarizedExperiment R object.
 
 The following steps need to be performed to prepare the data:
 
@@ -166,7 +166,7 @@ query_rna = GDCquery(
   #TCGAbiolinks:::getProjectSummary('TCGA-LAML')
   data.category = 'Transcriptome Profiling',
   data.type = 'Gene Expression Quantification',
-  workflow.type = 'HTSeq - Counts'
+  workflow.type = 'STAR - Counts'
 )
 
 #extract results of the query
@@ -238,14 +238,14 @@ Transformation to FPKM values and normalisation {#calc-fpkm}
 
 Singscore requires gene expression measurements to be comparable between genes within a sample, therefore, correction for gene length bias needs to be performed [@oshlack09]. Transformations such as transcripts per million (TPM) and reads/fragments per kilobase per million (RPKM/FPKM), that normalise by gene length, may be used. Both- TPM and RPKM/FPKM values should produce similar results when applying singscore provided that the library size is large enough, which they are here. RPKM values are generally computed after correcting for compositional biases. The `calcNormFactors` function in edgeR provides three methods to do so, TMM normalisation being the default. @chen16 and @law16 discuss the implications of normalisation prior to down-stream processing such as differential expression analysis. Normlisation is generally performed for cross-sample analysis where samples need to be comparable. Singscores are invariant to data normalisation as the analysis is contained within the sample of interest. The idea extends to any transformation that preserves the relative ranks of genes within a sample such as a log transformation. Here, we use TMM normalisation solely for visualisation purposes.
 
-Data transformation to TPM or RPKM/FPKM requires the lengths for all genes to be calculated. Gene lengths need to be computed based on the alignment and quantification parameters. The TCGA transcriptomic data has been aligned using STAR and quantified using HTSeq (details of the pipeline available at <https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/>). HTSeq quantifies reads mapping to the exons of each gene, therefore, effective gene lengths can be calculated as the sum of all exons spanning the gene. The GENCODE v22 annotation file was used for quantification therefore the same file needs to be used to compute gene lengths.
+Data transformation to TPM or RPKM/FPKM requires the lengths for all genes to be calculated. Gene lengths need to be computed based on the alignment and quantification parameters. The TCGA transcriptomic data has been aligned using STAR and quantified (details of the pipeline available at <https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/>). STAR quantifies reads mapping to the exons of each gene, therefore, effective gene lengths can be calculated as the sum of all exons spanning the gene. The GENCODE v36 annotation file was used for quantification therefore the same file needs to be used to compute gene lengths.
 
 ```{r download_gencode, results='hide'}
-#download v22 of the GENCODE annotation
+#download v36 of the GENCODE annotation
 library(BiocFileCache)
-gencode_file = 'gencode.v22.annotation.gtf.gz'
+gencode_file = 'gencode.v36.annotation.gtf.gz'
 gencode_link = paste(
-  'ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_22',
+  'ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_36',
   gencode_file,
   sep = '/'
   )
@@ -278,7 +278,7 @@ gene_lengths = merge(genetype, gene_lengths)
 
 #remove ENSEMBL ID version numbers
 gene_lengths$ensembl_gene_id = gsub('\\.[0-9]*', '', gene_lengths$ensembl_gene_id)
-saveRDS(gene_lengths, file = 'gene_lengths_HTSeq_gencodev22.rds')
+saveRDS(gene_lengths, file = 'gene_lengths_gencode_v36.rds')
 gene_lengths
 ```
 

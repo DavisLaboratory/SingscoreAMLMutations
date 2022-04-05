@@ -128,7 +128,7 @@ AML中的复发性遗传损伤还包括赖氨酸甲基转移酶2A（*KMT2A*，�
 数据下载与处理 {#download-and-prepare}
 ==================================
 
-我们可以通过Genomic Data Commons（GDC）获得多种不同预处理的TCGA数据。转录组数据有count值和FPKM值，有用上四分位数标准化（upper quantile normalisation）前后的值。经过其它方式预处理后的数据可以在 [www.cbioportal.org](http://www.cbioportal.org/) 和 [firebrowse.org](http://firebrowse.org) 找到。GDC的数据使用了STAR的“two-pass”模式进行序列比对，使用了HTSeq进行定量。用户在使用 [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool) 下载GDC中的数据时，可以通过GDC portal选择自己感兴趣的特定文件进行下载。下载之后需要读取并整合这些文件之后才可以进行下游分析。以上这些步骤（包括下载）可以通过R包`TCGAbiolinks` [@colaprico15, @R-TCGAbiolinks]完成。这个包支持使用GDC API和GDC client进行数据下载，我们会使用该包完成下载、注释并将数据整合成SummarizedExperiment R对象。
+我们可以通过Genomic Data Commons（GDC）获得多种不同预处理的TCGA数据。转录组数据有count值和FPKM值，有用上四分位数标准化（upper quantile normalisation）前后的值。经过其它方式预处理后的数据可以在 [www.cbioportal.org](http://www.cbioportal.org/) 和 [firebrowse.org](http://firebrowse.org) 找到。GDC的数据使用了STAR的“two-pass”模式进行序列比对，使用了STAR进行定量。用户在使用 [GDC data transfer tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool) 下载GDC中的数据时，可以通过GDC portal选择自己感兴趣的特定文件进行下载。下载之后需要读取并整合这些文件之后才可以进行下游分析。以上这些步骤（包括下载）可以通过R包`TCGAbiolinks` [@colaprico15, @R-TCGAbiolinks]完成。这个包支持使用GDC API和GDC client进行数据下载，我们会使用该包完成下载、注释并将数据整合成SummarizedExperiment R对象。
 
 在开始分析之前需要完成一下几步数据处理：
 1. 创建查询列表以下载特定的文件；
@@ -163,7 +163,7 @@ query_rna = GDCquery(
   #TCGAbiolinks:::getProjectSummary('TCGA-LAML')
   data.category = 'Transcriptome Profiling',
   data.type = 'Gene Expression Quantification',
-  workflow.type = 'HTSeq - Counts'
+  workflow.type = 'STAR - Counts'
 )
 
 #extract results of the query
@@ -235,14 +235,14 @@ aml_se = aml_se[keep, ]
 
 Singscore要求同一个样本内的基因表达量是可以互相比较的，因此我们需要对基因长度进行归一化[@oshlack09]。数据可以被转换成transcripts per million (TPM)或者reads/fragments per kilobase per million (RPKM/FPKM)，它们都对基因长度进行了归一化。因此针对这两种转换方法，只要library size足够大，singscore得到的结果应当是类似的。edgeR包中的`calcNormFactors`函数提供了三种对基因长度归一化的方法，在不指定的情况下TMM normalisation是默认的方法。 @chen16 和 @law16 讨论了在下游分析如差异表达分析之前进行数据归一化的意义。通常归一化的目的是使得样本之间的比较是有意义的。Singscore的分析是针对单个样本内的因此无需对整体样本进行归一化。同理，该方法也不受其它转换方式（如log transformation）的影响。这里我们仅出于可视化目的使用TMM normalisation。
 
-将数据转换成TPM或者RPKM/FPKM值需要先计算所有基因的长度。基因长度的计算依赖于序列比对过程和定量参数。TCGA转录组数据使用了STAR进行序列比对并用HTSeq进行定量（流程细节见<https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/>）。HTSeq统计了比对到每个基因外显子区域的read数量，因此有效基因长度应当是基因的所有外显子区域长度之和。GENCODE v22被用于定量过程中的注释，因此在计算基因长度时仍然应该用这个注释文件。
+将数据转换成TPM或者RPKM/FPKM值需要先计算所有基因的长度。基因长度的计算依赖于序列比对过程和定量参数。TCGA转录组数据使用了STAR进行序列比对并用STAR进行定量（流程细节见<https://docs.gdc.cancer.gov/Data/Bioinformatics_Pipelines/Expression_mRNA_Pipeline/>）。STAR统计了比对到每个基因外显子区域的read数量，因此有效基因长度应当是基因的所有外显子区域长度之和。GENCODE v36被用于定量过程中的注释，因此在计算基因长度时仍然应该用这个注释文件。
 
 ```{r download_gencode, results='hide'}
-#download v22 of the GENCODE annotation
+#download v36 of the GENCODE annotation
 library(BiocFileCache) 
-gencode_file = 'gencode.v22.annotation.gtf.gz'
+gencode_file = 'gencode.v36.annotation.gtf.gz'
 gencode_link = paste(
-  'ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_22',
+  'ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_36',
   gencode_file,
   sep = '/'
   )
@@ -275,7 +275,7 @@ gene_lengths = merge(genetype, gene_lengths)
 
 #remove ENSEMBL ID version numbers
 gene_lengths$ensembl_gene_id = gsub('\\.[0-9]*', '', gene_lengths$ensembl_gene_id)
-saveRDS(gene_lengths, file = 'gene_lengths_HTSeq_gencodev22.rds')
+saveRDS(gene_lengths, file = 'gene_lengths_gencode_v36.rds')
 gene_lengths
 ```
 
