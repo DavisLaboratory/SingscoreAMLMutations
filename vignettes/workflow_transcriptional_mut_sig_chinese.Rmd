@@ -179,7 +179,7 @@ colnames(rnaseq_res)
 
 ```{r gdc_download, results='hide'}
 datapath = file.path(tempdir(), 'GDCdata')
-GDCdownload(query_rna, directory = datapath) #(size: 39MB)
+GDCdownload(query_rna, directory = datapath) #(size: 170MB)
 ```
 
 将count-level数据读入R {#read-data}
@@ -191,7 +191,7 @@ GDCdownload(query_rna, directory = datapath) #(size: 39MB)
 aml_se = GDCprepare(query_rna, directory = datapath)
 ```
 
-`RangedSummarizedExperiment`对象中包含了56925个特征（features）和151个样本。原始数据包含60483个特征，其中3881个特征因无法和ENSEMBL GRCh38.p12匹配而被丢弃。用`rowData(se)`和`colData(se)`函数可以获得特征和样本的注释信息，用`assay(se)`函数可以获得counts数据。TCGA数据往往包含一些福尔马林固定、石蜡包埋（formalin-fixed paraffin-embedded，FFPE）的样本，这些样本需要被过滤掉以避免protocol不同而引入的误差。这一步在本数据集中不需要，因为这一步骤是针对实体瘤（solid tumors）而非白血病（leukemias）的。
+`RangedSummarizedExperiment`对象中包含了60660个特征（features）和150个样本。用`rowData(se)`和`colData(se)`函数可以获得特征和样本的注释信息，用`assay(se)`函数可以获得counts数据。TCGA数据往往包含一些福尔马林固定、石蜡包埋（formalin-fixed paraffin-embedded，FFPE）的样本，这些样本需要被过滤掉以避免protocol不同而引入的误差。这一步在本数据集中不需要，因为这一步骤是针对实体瘤（solid tumors）而非白血病（leukemias）的。
 
 ```{r show_se}
 aml_se
@@ -205,6 +205,9 @@ aml_se
 ```{r remove_dups}
 library(SummarizedExperiment)
 library(edgeR)
+
+#remove ENSEMBL ID version numbers
+rownames(aml_se) <- gsub('\\.[0-9]*', '', rownames(aml_se))
 
 aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
 ```
@@ -514,7 +517,7 @@ grid.arrange(grobs = rank_plots, nrow = 1)
 用Verhaak标签预测突变 {#predict-verhaak}
 ------------------------------------------------
 
-突变状态可以通过logit函数的逻辑回归模型（logistic regression model）进行预测。这个模型相对于将标签（signature）中每一个基因作为变量的方法而言更加简便， @verhaak05 的标签（signature）中的429个基因在逻辑回归中可以产生429个预测变量（predictor）。由于样本数少于预测变量（predictor）数，一些特征选取（feature selection）方法可能导致信息的丢失。此外，基因水平的模型在选择更多基因标签（gene signatures）上存在限制。而singscore的模型在某种程度上会继承它非参数的特性。比如该模型对于任何保留了基因排序的数据转换都是稳健的。该模型主要的不足在于丢失了一定的准确性，因为它将429个基因的信息限制到两个分类中。
+突变状态可以通过logit函数的逻辑回归模型（logistic regression model）进行预测。这个模型相对于将标签（signature）中每一个基因作为变量的方法而言更加简便， @verhaak05 的标签（signature）中的436个基因在逻辑回归中可以产生436个预测变量（predictor）。由于样本数少于预测变量（predictor）数，一些特征选取（feature selection）方法可能导致信息的丢失。此外，基因水平的模型在选择更多基因标签（gene signatures）上存在限制。而singscore的模型在某种程度上会继承它非参数的特性。比如该模型对于任何保留了基因排序的数据转换都是稳健的。该模型主要的不足在于丢失了一定的准确性，因为它将436个基因的信息限制到两个分类中。
 
 不管怎样，我们的目的不是讨论哪个模型应该被用于预测突变状态，而是展示singscore和转录组标签（signature）区分样本的能力。因此我们在这里用训练模型的数据评价该模型的表现。我们先把分数和突变注释合并到一起。
 
@@ -671,7 +674,7 @@ p_mll_npm1c = plotScoreLandscape(
 p_mll_npm1c
 ```
 
-图\@ref(fig:plot-signature-landscape)显示，尽管两个标签之间只有16个共同基因（标签大小分别为78和429个基因），两个标签的分数之间仍具有很强的正相关（Spearman's $\rho$ = `r round(cor(verhaak_scores$TotalScore, rossmll_scores$TotalScore, method = 'spearman'), digits = 3)`）。在这样的分析中，我们可能想像 @cursons18 文章里那样把新的数据点投影在图上。或者我们可能希望将已有的数据点投影在图上以观察样本的分类情况。这里我们将*MLL* fusions、*MLL* PTDs、*PML-RARA* fusions和NPM1c mutations四类样本的数据点进行投影。首先我们需要先建立注释。
+图\@ref(fig:plot-signature-landscape)显示，尽管两个标签之间只有17个共同基因（标签大小分别为81和436个基因），两个标签的分数之间仍具有很强的正相关（Spearman's $\rho$ = `r round(cor(verhaak_scores$TotalScore, rossmll_scores$TotalScore, method = 'spearman'), digits = 3)`）。在这样的分析中，我们可能想像 @cursons18 文章里那样把新的数据点投影在图上。或者我们可能希望将已有的数据点投影在图上以观察样本的分类情况。这里我们将*MLL* fusions、*MLL* PTDs、*PML-RARA* fusions和NPM1c mutations四类样本的数据点进行投影。首先我们需要先建立注释。
 
 ```{r new_annotations}
 #new annotation - modify previously used annotations

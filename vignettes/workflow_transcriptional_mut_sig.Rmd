@@ -182,7 +182,7 @@ The `GDCdownload` function then executes the query on the GDC database and begin
 
 ```{r gdc_download, results='hide'}
 datapath = file.path(tempdir(), 'GDCdata')
-GDCdownload(query_rna, directory = datapath) #(size: 39MB)
+GDCdownload(query_rna, directory = datapath) #(size: 170MB)
 ```
 
 Reading count-level data into R {#read-data}
@@ -194,7 +194,7 @@ The `GDCprepare` function reads and processes the downloaded data into a `Ranged
 aml_se = GDCprepare(query_rna, directory = datapath)
 ```
 
-The object contains data for 56,925 features and 151 samples. The original data files contain 60,483 features, some of which (3,881) could not be mapped to ENSEMBL GRCh38.p12. Feature and sample annotations can be accessed using `rowData(se)` and `colData(se)`, respectively, and the counts data can be accessed using `assay(se)`. TCGA data usually contains some formalin-fixed paraffin-embedded (FFPE) samples which should be discarded from the analysis as the protocol introduces biological artefacts. This procedure is only performed on solid tumours and not leukemias, therefore, no filtering is required for this data set.
+The object contains data for 60,660 features and 150 samples. Feature and sample annotations can be accessed using `rowData(se)` and `colData(se)`, respectively, and the counts data can be accessed using `assay(se)`. TCGA data usually contains some formalin-fixed paraffin-embedded (FFPE) samples which should be discarded from the analysis as the protocol introduces biological artefacts. This procedure is only performed on solid tumours and not leukemias, therefore, no filtering is required for this data set.
 
 ```{r show_se}
 aml_se
@@ -208,6 +208,9 @@ The `edgeR` package [@R-edgeR] contains methods that assist in the data normalis
 ```{r remove_dups}
 library(SummarizedExperiment)
 library(edgeR)
+
+#remove ENSEMBL ID version numbers
+rownames(aml_se) <- gsub('\\.[0-9]*', '', rownames(aml_se))
 
 aml_dge = DGEList(counts = assay(aml_se), genes = rowData(aml_se))
 ```
@@ -510,7 +513,7 @@ Combined, these plots show that both the up- and down-regulated genes play an im
 Predicting NPM1c mutation status using the Verhaak signature {#predict-verhaak}
 ------------------------------------------------------------
 
-Mutation status can be predicted from singscores using a logistic regression model with a "logit" link function. The benefits of this model over one where each gene in the signature is used as a term in the model is the simplicity of the model. The @verhaak05 signature consists of 429 genes which would result in a regression model with 429 predictors. As there are fewer samples than the predictors, some feature selection method would be required which may result in the loss of information. Moreover, automating model development on a larger selection of gene signatures would be limited with gene-level models. Additionally, models trained using singscore would inherit its non-parametric properties to some extent. For instance, such models would be invariant to all data transformations that retain within sample ranks of genes. The main limitation of such models would be the loss of accuracy due to summarisation of the data (information on 429 genes is summarised into a two-component score).
+Mutation status can be predicted from singscores using a logistic regression model with a "logit" link function. The benefits of this model over one where each gene in the signature is used as a term in the model is the simplicity of the model. The @verhaak05 signature consists of 436 genes which would result in a regression model with 436 predictors. As there are fewer samples than the predictors, some feature selection method would be required which may result in the loss of information. Moreover, automating model development on a larger selection of gene signatures would be limited with gene-level models. Additionally, models trained using singscore would inherit its non-parametric properties to some extent. For instance, such models would be invariant to all data transformations that retain within sample ranks of genes. The main limitation of such models would be the loss of accuracy due to summarisation of the data (information on 436 genes is summarised into a two-component score).
 
 In any case, our aim here is not to discuss the various models that can be used to predict mutation status, but to exhibit the discriminant power of singscore and transcriptomic signatures. consequently, the data used to train the model are used to evaluate the basic performance properties. We begin by combining the scores with mutation annotations.
 
@@ -691,7 +694,7 @@ p_mll_npm1c = plotScoreLandscape(
 p_mll_npm1c
 ```
 
-Figure \@ref(fig:plot-signature-landscape) shows a strong positive association between scores from the two signatures (Spearman's $\rho$ = `r round(cor(verhaak_scores$TotalScore, rossmll_scores$TotalScore, method = 'spearman'), digits = 3)`) despite only 16 genes being shared across the two signatures (signature sizes are 78 and 429 genes). In such an analysis, we may be interested in projecting new data points onto the landscape as done by @cursons18. Alternatively, we may want to overlay some existing data points to investigate sample stratification using scores. Here, we overlay *MLL* fusions, *MLL* PTDs, *PML-RARA* fusions and NPM1c mutations onto the landscape. First, we build the annotation vector.
+Figure \@ref(fig:plot-signature-landscape) shows a strong positive association between scores from the two signatures (Spearman's $\rho$ = `r round(cor(verhaak_scores$TotalScore, rossmll_scores$TotalScore, method = 'spearman'), digits = 3)`) despite only 17 genes being shared across the two signatures (signature sizes are 81 and 436 genes). In such an analysis, we may be interested in projecting new data points onto the landscape as done by @cursons18. Alternatively, we may want to overlay some existing data points to investigate sample stratification using scores. Here, we overlay *MLL* fusions, *MLL* PTDs, *PML-RARA* fusions and NPM1c mutations onto the landscape. First, we build the annotation vector.
 
 ```{r new_annotations}
 #new annotation - modify previously used annotations
